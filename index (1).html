@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#190e12">
+  <title>Задачи — список дел</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #100b0e;
+      --panel: #1b1217;
+      --panel-2: #24171e;
+      --line: #3a252e;
+      --wine: #76283f;
+      --wine-light: #a74460;
+      --text: #f5eff1;
+      --muted: #aa9ba1;
+      --white: #fff;
+      --done: #89747c;
+      --shadow: 0 22px 70px #0008;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 48px 18px;
+      background:
+        radial-gradient(ellipse at 50% -15%, #54203355 0, transparent 52%),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .app { width: min(100%, 720px); margin: 0 auto; }
+    header { margin-bottom: 30px; }
+    .eyebrow {
+      color: #c17b90; font-size: 11px; font-weight: 700;
+      letter-spacing: .22em; text-transform: uppercase;
+    }
+    h1 { margin: 8px 0 6px; font-size: clamp(34px, 7vw, 48px); line-height: 1.08; letter-spacing: -.045em; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .panel {
+      background: linear-gradient(145deg, #21161c, #171015);
+      border: 1px solid var(--line); border-radius: 18px;
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    form { display: flex; gap: 10px; padding: 18px; border-bottom: 1px solid var(--line); }
+    input[type="text"] {
+      min-width: 0; flex: 1; border: 1px solid #49303a; border-radius: 10px;
+      padding: 14px 15px; background: #100b0e; color: var(--text);
+      font: inherit; outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    input[type="text"]::placeholder { color: #75666d; }
+    input[type="text"]:focus { border-color: var(--wine-light); box-shadow: 0 0 0 3px #a7446028; }
+    button {
+      border: 0; border-radius: 10px; padding: 0 18px; min-height: 48px;
+      color: white; background: var(--wine); font: inherit; font-weight: 650;
+      cursor: pointer; transition: background .2s, transform .15s;
+    }
+    button:hover { background: var(--wine-light); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible { outline: 2px solid #d17a94; outline-offset: 3px; }
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 20px; color: var(--muted); font-size: 13px;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 5px; }
+    .filter {
+      min-height: 30px; padding: 4px 10px; border-radius: 7px;
+      color: var(--muted); background: transparent; font-size: 12px; font-weight: 600;
+    }
+    .filter:hover { background: #ffffff0c; color: var(--text); }
+    .filter.active { color: white; background: #76283f66; }
+    ul { list-style: none; margin: 0; padding: 0 18px 12px; }
+    li {
+      display: flex; align-items: center; gap: 13px; padding: 14px 3px;
+      border-top: 1px solid #34232a;
+    }
+    li:first-child { border-top: 0; }
+    .check {
+      appearance: none; flex: 0 0 19px; width: 19px; height: 19px;
+      margin: 0; border: 1.5px solid #78505f; border-radius: 6px;
+      background: #100b0e; cursor: pointer; display: grid; place-items: center;
+    }
+    .check:checked { border-color: var(--wine-light); background: var(--wine); }
+    .check:checked::after { content: "✓"; color: white; font-size: 13px; font-weight: 800; }
+    .task-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    li.completed .task-text { color: var(--done); text-decoration: line-through; text-decoration-thickness: 1px; }
+    .delete {
+      min-height: 34px; width: 34px; padding: 0; border-radius: 8px;
+      color: #bdaab1; background: transparent; font-size: 19px; font-weight: 400;
+    }
+    .delete:hover { color: white; background: #8d2948; }
+    .empty { padding: 36px 18px 42px; text-align: center; color: var(--muted); }
+    .empty strong { display: block; color: #e8dce1; font-size: 15px; margin-bottom: 4px; }
+    .footer {
+      display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      padding: 13px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px;
+    }
+    .clear {
+      min-height: auto; padding: 5px 0; color: #c28a9c; background: transparent;
+      font-size: 12px; font-weight: 600;
+    }
+    .clear:hover { color: white; background: transparent; text-decoration: underline; }
+    @media (max-width: 520px) {
+      body { padding: 32px 13px; }
+      form { padding: 13px; }
+      form button { padding: 0 13px; }
+      .toolbar { align-items: flex-start; flex-direction: column; padding: 13px 16px; }
+      ul { padding-inline: 14px; }
+      .footer { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="eyebrow">Личное пространство · продуктивность</div>
+      <h1>Мои задачи<span style="color:#a74460">.</span></h1>
+      <p class="subtitle">Спокойно. Последовательно. По одной задаче за раз.</p>
+    </header>
+
+    <section class="panel" aria-label="Список задач">
+      <form id="task-form">
+        <input id="task-input" type="text" maxlength="180" placeholder="Что нужно сделать?" aria-label="Новая задача" autocomplete="off" required>
+        <button type="submit">Добавить <span aria-hidden="true">＋</span></button>
+      </form>
+      <div class="toolbar">
+        <span id="count">0 задач</span>
+        <div class="filters" aria-label="Фильтр задач">
+          <button class="filter active" type="button" data-filter="all">Все</button>
+          <button class="filter" type="button" data-filter="active">Активные</button>
+          <button class="filter" type="button" data-filter="completed">Готовые</button>
+        </div>
+      </div>
+      <ul id="task-list"></ul>
+      <div id="empty" class="empty">
+        <strong>Пока здесь пусто</strong>
+        Добавьте первую задачу — и начните с малого.
+      </div>
+      <div class="footer">
+        <span id="progress">Выполнено: 0 из 0</span>
+        <button id="clear-completed" class="clear" type="button">Удалить выполненные</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "wine-task-list-v1";
+    const form = document.querySelector("#task-form");
+    const input = document.querySelector("#task-input");
+    const list = document.querySelector("#task-list");
+    const empty = document.querySelector("#empty");
+    const count = document.querySelector("#count");
+    const progress = document.querySelector("#progress");
+    const clearCompleted = document.querySelector("#clear-completed");
+    const filterButtons = [...document.querySelectorAll(".filter")];
+
+    let tasks = loadTasks();
+    let currentFilter = "all";
+
+    function loadTasks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return Array.isArray(saved)
+          ? saved.filter(t => t && typeof t.text === "string")
+              .map(t => ({ id: String(t.id), text: t.text, done: Boolean(t.done) }))
+          : [];
+      } catch { return []; }
+    }
+
+    function saveTasks() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+      catch { /* Приложение продолжит работать, даже если хранилище недоступно. */ }
+    }
+
+    function render() {
+      list.replaceChildren();
+      const visible = tasks.filter(task =>
+        currentFilter === "all" ||
+        (currentFilter === "active" && !task.done) ||
+        (currentFilter === "completed" && task.done)
+      );
+
+      empty.hidden = visible.length > 0;
+      if (visible.length === 0 && tasks.length > 0) {
+        empty.querySelector("strong").textContent = "Здесь пока ничего нет";
+        empty.lastChild.textContent = "Попробуйте выбрать другой фильтр.";
+      } else {
+        empty.querySelector("strong").textContent = "Пока здесь пусто";
+        empty.lastChild.textContent = "Добавьте первую задачу — и начните с малого.";
+      }
+
+      for (const task of visible) {
+        const li = document.createElement("li");
+        if (task.done) li.classList.add("completed");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "check";
+        checkbox.checked = task.done;
+        checkbox.setAttribute("aria-label", `Отметить задачу «${task.text}» как выполненную`);
+        checkbox.addEventListener("change", () => {
+          task.done = checkbox.checked;
+          saveTasks();
+          render();
+        });
+
+        const text = document.createElement("span");
+        text.className = "task-text";
+        text.textContent = task.text;
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", `Удалить задачу «${task.text}»`);
+        remove.title = "Удалить";
+        remove.addEventListener("click", () => {
+          tasks = tasks.filter(item => item.id !== task.id);
+          saveTasks();
+          render();
+        });
+
+        li.append(checkbox, text, remove);
+        list.append(li);
+      }
+
+      const remaining = tasks.filter(t => !t.done).length;
+      const completed = tasks.length - remaining;
+      count.textContent = `${remaining} ${plural(remaining, "задача", "задачи", "задач")} осталось`;
+      progress.textContent = `Выполнено: ${completed} из ${tasks.length}`;
+      clearCompleted.disabled = completed === 0;
+      clearCompleted.style.opacity = completed === 0 ? ".45" : "1";
+      filterButtons.forEach(button => {
+        const active = button.dataset.filter === currentFilter;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+    }
+
+    function plural(n, one, few, many) {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+      return many;
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.unshift({ id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, text, done: false });
+      saveTasks();
+      currentFilter = "all";
+      input.value = "";
+      render();
+      input.focus();
+    });
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        currentFilter = button.dataset.filter;
+        render();
+      });
+    });
+
+    clearCompleted.addEventListener("click", () => {
+      tasks = tasks.filter(task => !task.done);
+      saveTasks();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
